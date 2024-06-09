@@ -7,6 +7,20 @@ from stable_baselines import PPO2
 import time
 from utils import make_vec_envs
 
+from IPython import display
+import matplotlib.pyplot as plt
+
+def show_state(env, step=0, changes=0, total_reward=0, name=""):
+    plt.figure(10)
+    plt.clf()
+    # plt.title("{} | Step: {} Changes: {} Total Reward: {}".format(name, step, changes, total_reward))
+    plt.axis('off')
+    plt.imshow(env.render(mode='rgb_array'))
+    plt.savefig(f"./runs/{step}.jpg")
+    plt.show()
+    display.clear_output(wait=True)
+    display.display(plt.gcf())
+
 def infer(game, representation, model_path, **kwargs):
     """
      - max_trials: The number of trials per evaluation.
@@ -27,14 +41,17 @@ def infer(game, representation, model_path, **kwargs):
     agent = PPO2.load(model_path)
     env = make_vec_envs(env_name, representation, None, 1, **kwargs)
     obs = env.reset()
-    obs = env.reset()
+    show_state(env)
     dones = False
     for i in range(kwargs.get('trials', 1)):
         while not dones:
             action, _ = agent.predict(obs)
             obs, _, dones, info = env.step(action)
-            if kwargs.get('verbose', False):
-                print(info[0])
+            show_state(env, info[0]['iterations'], info[0]['changes'])
+            print(info)
+            print(obs.shape)
+            # if kwargs.get('verbose', False):
+            #     # print(info)
             if dones:
                 break
         time.sleep(0.2)
