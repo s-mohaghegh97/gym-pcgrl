@@ -10,6 +10,23 @@ from stable_baselines import PPO2
 from stable_baselines.bench import Monitor
 from stable_baselines.common.vec_env import SubprocVecEnv, DummyVecEnv
 
+class MyDummyVecEnv(DummyVecEnv):
+    def step_wait(self):
+        for env_idx in range(self.num_envs):
+            obs, self.buf_rews[env_idx], self.buf_dones[env_idx], self.buf_infos[env_idx] =\
+                self.envs[env_idx].step(self.actions[env_idx])
+            if self.buf_dones[env_idx]:
+                # save final observation where user can get it, then reset
+                self.buf_infos[env_idx]['terminal_observation'] = obs
+            self._save_obs(env_idx, obs)
+        return (self._obs_from_buf(), np.copy(self.buf_rews), np.copy(self.buf_dones),
+                self.buf_infos.copy())
+    def set_observation(self, obs):
+        for env_idx in range(self.num_envs):
+            self.envs[env_idx].set_observation(obs)
+            self._save_obs(env_idx, obs)
+
+
 class RenderMonitor(Monitor):
     """
     Wrapper for the environment to save data in .csv files.
@@ -67,7 +84,7 @@ def make_vec_envs(env_name, representation, log_dir, n_cpu, **kwargs):
             env_lst.append(make_env(env_name, representation, i, log_dir, **kwargs))
         env = SubprocVecEnv(env_lst)
     else:
-        env = DummyVecEnv([make_env(env_name, representation, 0, log_dir, **kwargs)])
+        env = MyDummyVecEnv([make_env(env_name, representation, 0, log_dir, **kwargs)])
     return env
 
 def get_exp_name(game, representation, experiment, **kwargs):
