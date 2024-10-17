@@ -117,7 +117,7 @@ class Inference:
                     self.binary_first_path = info[self.length]
                     first_step = False
                 #done base on the games like zelda
-                # print(game, info)
+                print(game, info)
                 if (info["changes"] != old_change) or (self.check_done(game, info) and info["changes"] != old_change):
                     self.append_data(data_episodes, obs, action, int(rewards), new_obs, dones, info['x'], info['y'])
                     if dones and self.check_done(game, info):
@@ -139,18 +139,18 @@ class Inference:
 
                 data.append(data_episodes)
                 episode += 1
-        fname = f'./dataset/{game}_{representation}_dataset.pkl'
-        if not os.path.exists('./dataset'):  
-            os.mkdir('./dataset')
+        fname = f'./../dataset/{game}-{representation}-v0.pkl'
+        if not os.path.exists('./../dataset'):  
+            os.mkdir('./../dataset')
         with open(fname, 'wb') as f:
             print('Before dump')
             pickle.dump(data, f)
 
 ################################## MAIN ########################################
 if __name__ == '__main__':
-    game = 'binary'
+    game = 'sokoban'
     representation = 'wide'
-    model_path = 'runs/{}_{}_1_log/latest_model.pkl'.format(game, representation)
+    model_path = '../runs/{}_{}_1_log/latest_model.pkl'.format(game, representation)
     num_episode = 1
 
     inference = Inference(game, representation)

@@ -64,15 +64,19 @@ class Inference:
                 'actions': [],
                 'terminals': [],
                 'rewards': [],
-                'next_observations': []
+                'next_observations': [],
+                'x': [],
+                'y': []
                 }
 
-    def append_data(self, data, s, a, r, new_s, done):
+    def append_data(self, data, s, a, r, new_s, done, x, y):
         data['observations'].append(s)
         data['actions'].append(a)
         data['rewards'].append(r)
         data['terminals'].append(done)
         data['next_observations'].append(new_s)
+        data['x'].append(x)
+        data['y'].append(y)
 
     def infer(self, game, representation, model_path, num_episode):
         # policy = CustomPolicyBigMap
@@ -115,7 +119,7 @@ class Inference:
                 #done base on the games like zelda
                 # print(game, info)
                 if (info["changes"] != old_change) or (self.check_done(game, info) and info["changes"] != old_change):
-                    self.append_data(data_episodes, obs, action, int(rewards), new_obs, dones)
+                    self.append_data(data_episodes, obs, action, int(rewards), new_obs, dones, info['x'], info['y'])
                     if dones and self.check_done(game, info):
                         break
                 obs = new_obs
@@ -130,10 +134,12 @@ class Inference:
                 data_episodes['actions'] = np.concatenate([np.array(data_episodes['actions'])], axis=0)
                 data_episodes['terminals'] = np.concatenate([np.array(data_episodes['terminals'])], axis=0)
                 data_episodes['rewards'] = np.concatenate([np.array(data_episodes['rewards'])], axis=0)
+                data_episodes['x'] = np.concatenate([np.array(data_episodes['x'])], axis=0)
+                data_episodes['y'] = np.concatenate([np.array(data_episodes['y'])], axis=0)
 
                 data.append(data_episodes)
                 episode += 1
-        fname = f'./dataset/{game}_{representation}_dataset.pkl'
+        fname = f'./dataset/{game}-{representation}-v0.pkl'
         if not os.path.exists('./dataset'):  
             os.mkdir('./dataset')
         with open(fname, 'wb') as f:
@@ -142,9 +148,9 @@ class Inference:
 
 ################################## MAIN ########################################
 if __name__ == '__main__':
-    game = 'sokoban'
+    game = 'zelda'
     representation = 'wide'
-    model_path = 'runs/{}_{}_1_log/latest_model.pkl'.format(game, representation)
+    model_path = './runs/{}_{}_1_log/latest_model.pkl'.format(game, representation)
     num_episode = 1
 
     inference = Inference(game, representation)
