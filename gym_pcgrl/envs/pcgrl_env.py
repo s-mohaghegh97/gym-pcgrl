@@ -1,3 +1,5 @@
+from gym_pcgrl.envs.reps.turtle_rep import TurtleRepresentation
+
 from gym_pcgrl.envs.probs import PROBLEMS
 from gym_pcgrl.envs.reps import REPRESENTATIONS
 from gym_pcgrl.envs.helper import get_int_prob, get_string_map
@@ -5,6 +7,8 @@ import numpy as np
 import gym
 from gym import spaces
 import PIL
+from gym_pcgrl.envs.reps.narrow_rep import NarrowRepresentation
+from gym_pcgrl.envs.reps.wide_rep import WideRepresentation
 
 """
 The PCGRL GYM Environment
@@ -131,7 +135,12 @@ class PcgrlEnv(gym.Env):
         #save copy of the old stats to calculate the reward
         old_stats = self._rep_stats
         # update the current state to the new state based on the taken action
-        change, x, y = self._rep.update(action)
+        if type(self._rep) == NarrowRepresentation:
+            change, x, y, old_x, old_y = self._rep.update(action)
+        if type(self._rep) == WideRepresentation:
+            change, x, y = self._rep.update(action)
+        if type(self._rep) == TurtleRepresentation:
+            change, x, y = self._rep.update(action)
         if change > 0:
             self._changes += change
             self._heatmap[y][x] += 1.0
@@ -146,6 +155,16 @@ class PcgrlEnv(gym.Env):
         info["changes"] = self._changes
         info["max_iterations"] = self._max_iterations
         info["max_changes"] = self._max_changes
+        if type(self._rep) == NarrowRepresentation:
+            info["x"] = old_x
+            info["y"] = old_y
+        if type(self._rep) == WideRepresentation:
+            info["x"] = x
+            info["y"] = y
+        #return the values
+        if type(self._rep) == TurtleRepresentation:
+            info["x"] = x
+            info["y"] = y
         #return the values
         return observation, reward, done, info
 
@@ -158,7 +177,8 @@ class PcgrlEnv(gym.Env):
     Returns:
         img or boolean: img for rgb_array rendering and boolean for human rendering
     """
-    def render(self, mode='human'):
+    def render(self, mode='rgb_array'):
+        mode = 'rgb_array'
         tile_size=16
         img = self._prob.render(get_string_map(self._rep._map, self._prob.get_tile_types()))
         img = self._rep.render(img, self._prob._tile_size, self._prob._border_size).convert("RGB")
@@ -180,3 +200,8 @@ class PcgrlEnv(gym.Env):
         if self.viewer:
             self.viewer.close()
             self.viewer = None
+
+    def set_observation(self, obs):
+        if type(self._rep) == WideRepresentation:
+            obs = np.argmax(obs, axis=-1)
+            self._rep.set_observation(obs)

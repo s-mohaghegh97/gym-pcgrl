@@ -144,7 +144,7 @@ game = 'sokoban'
 representation = 'wide'
 # model_path = 'models/{}/{}/model_1.pkl'.format(game, representation)
 model_path = '../best_models/best_model_wide.pkl'
-num_episode = 100000
+num_episode = 1
 
 if __name__ == '__main__':
     infer(game, representation, model_path, num_episode)

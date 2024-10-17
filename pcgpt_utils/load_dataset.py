@@ -19,7 +19,7 @@ def show_state(env, step=0, changes=0, total_reward=0, name=""):
     display.clear_output(wait=True)
     display.display(plt.gcf())
 
-with open('/home/sajjad/Documents/PCG/gym-pcgrl/pcgpt_utils/sokoban_wide.pkl', 'rb') as f:
+with open('/home/sajjad/Documents/PCG/gym-pcgrl/pcgpt_utils/sokoban_wide_100000.pkl', 'rb') as f:
     trajectories = pickle.load(f)
 
 kwargs = {
