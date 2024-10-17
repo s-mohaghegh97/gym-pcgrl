@@ -98,6 +98,8 @@ class NarrowRepresentation(Representation):
     """
     def update(self, action):
         change = 0
+        old_y = self._y
+        old_x = self._x
         if action > 0:
             change += [0,1][self._map[self._y][self._x] != action-1]
             self._map[self._y][self._x] = action-1
@@ -111,7 +113,7 @@ class NarrowRepresentation(Representation):
                 self._y += 1
                 if self._y >= self._map.shape[0]:
                     self._y = 0
-        return change, self._x, self._y
+        return change, self._x, self._y, old_x, old_y
 
     """
     Modify the level image with a red rectangle around the tile that is
