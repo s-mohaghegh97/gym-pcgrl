@@ -2,17 +2,15 @@ import os
 import pickle
 import random
 import shutil
-
+import sys
+os.chdir('./../')
+sys.path[0] = os.getcwd()
 import numpy as np
-
 import model
 from stable_baselines import PPO2
-
 import time
-
 from utils import make_vec_envs
 from model import FullyConvPolicyBigMap, FullyConvPolicySmallMap, CustomPolicyBigMap, CustomPolicySmallMap
-
 from IPython import display
 import matplotlib.pyplot as plt
 
@@ -32,6 +30,7 @@ class Inference:
             self.height = 14
             self.length = 'path-length'
             self._target_path = 20
+            self.binary_first_path = 0
         
         elif game == "zelda":
             self.dim = 8
@@ -57,6 +56,7 @@ class Inference:
         elif game == "zelda":
             return info[self.length] > self._target_path and info["nearest-enemy"] >= self._target_enemy_dist
         elif game == "binary":
+            print(info[self.length] , self.binary_first_path,info["regions"],self._target_path)
             return info["regions"] == 1 and info[self.length] - self.binary_first_path >= self._target_path
 
     def reset_data(self):
@@ -107,6 +107,7 @@ class Inference:
             total_rewards = 0
             old_change = 0
             first_step = True
+            info = None
             while not dones:
                 action, _ = agent.predict(obs)
                 new_obs, rewards, dones, info = env.step(action)
@@ -117,7 +118,7 @@ class Inference:
                     self.binary_first_path = info[self.length]
                     first_step = False
                 #done base on the games like zelda
-                print(game, info)
+                # print(f'info: {info}')
                 if (info["changes"] != old_change) or (self.check_done(game, info) and info["changes"] != old_change):
                     self.append_data(data_episodes, obs, action, int(rewards), new_obs, dones, info['x'], info['y'])
                     if dones and self.check_done(game, info):
@@ -136,21 +137,20 @@ class Inference:
                 data_episodes['rewards'] = np.concatenate([np.array(data_episodes['rewards'])], axis=0)
                 data_episodes['x'] = np.concatenate([np.array(data_episodes['x'])], axis=0)
                 data_episodes['y'] = np.concatenate([np.array(data_episodes['y'])], axis=0)
-
                 data.append(data_episodes)
                 episode += 1
-        fname = f'./../dataset/{game}-{representation}-v0.pkl'
-        if not os.path.exists('./../dataset'):  
-            os.mkdir('./../dataset')
+        fname = f'./dataset/{game}-{representation}-v0.pkl'
+        if not os.path.exists('./dataset'):  
+            os.mkdir('./dataset')
         with open(fname, 'wb') as f:
             print('Before dump')
             pickle.dump(data, f)
 
 ################################## MAIN ########################################
 if __name__ == '__main__':
-    game = 'sokoban'
+    game = 'binary'
     representation = 'wide'
-    model_path = '../runs/{}_{}_1_log/latest_model.pkl'.format(game, representation)
+    model_path = './runs/{}_{}_1_log/best_model.pkl'.format(game, representation)
     num_episode = 1
 
     inference = Inference(game, representation)
