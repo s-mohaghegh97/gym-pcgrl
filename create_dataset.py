@@ -31,20 +31,33 @@ class Inference:
             self.width = 14
             self.height = 14
             self.length = 'path-length'
+            self._target_path = 20
+        
         elif game == "zelda":
             self.dim = 8
             self.width = 11
             self.height = 7
             self.length = 'path-length'
+            self._target_enemy_dist = 4
+            self._target_path = 16
 
         elif game == "sokoban":
             self.dim = 5
             self.width = 5
             self.height = 5
             self.length = 'sol-length'
+            self._target_solution = 18
+
         else:
             raise ValueError("Unsupported game type")
-
+    
+    def check_done(self, game , info):
+        if game == "sokoban":
+            return info[self.length] >= self._target_solution
+        elif game == "zelda":
+            return info[self.length] > self._target_path and info["nearest-enemy"] >= self._target_enemy_dist
+        elif game == "binary":
+            return info["regions"] == 1 and info[self.length] - self.binary_first_path >= self._target_path
 
     def reset_data(self):
         return {'observations': [],
@@ -89,22 +102,29 @@ class Inference:
             dones = False
             total_rewards = 0
             old_change = 0
+            first_step = True
             while not dones:
                 action, _ = agent.predict(obs)
                 new_obs, rewards, dones, info = env.step(action)
                 print(action)
                 _, _, action = np.unravel_index(action[0], (self.height, self.width, self.dim))
                 info = info[0]
-                if (info["changes"] != old_change) or (dones and info[ self.length] > 18 and info["changes"] != old_change):
+                if first_step: 
+                    self.binary_first_path = info[self.length]
+                    first_step = False
+                #done base on the games like zelda
+                # print(game, info)
+                if (info["changes"] != old_change) or (self.check_done(game, info) and info["changes"] != old_change):
                     self.append_data(data_episodes, obs, action, int(rewards), new_obs, dones)
-                    if dones and info[ self.length] > 18:
+                    if dones and self.check_done(game, info):
                         break
                 obs = new_obs
                 total_rewards += rewards
                 old_change = info["changes"]
                 if dones:
                     break
-            if dones and info[ self.length] >= 18:
+            #done base on the games like sokoban
+            if dones and self.check_done(game, info):
                 data_episodes['observations'] = np.concatenate([np.array(data_episodes['observations'])], axis=0)
                 data_episodes['next_observations'] = np.concatenate([np.array(data_episodes['next_observations'])], axis=0)
                 data_episodes['actions'] = np.concatenate([np.array(data_episodes['actions'])], axis=0)
@@ -122,7 +142,7 @@ class Inference:
 
 ################################## MAIN ########################################
 if __name__ == '__main__':
-    game = 'zelda'
+    game = 'sokoban'
     representation = 'wide'
     model_path = 'runs/{}_{}_1_log/latest_model.pkl'.format(game, representation)
     num_episode = 1
