@@ -203,5 +203,8 @@ class PcgrlEnv(gym.Env):
 
     def set_observation(self, obs):
         if type(self._rep) == WideRepresentation:
-            obs = np.argmax(obs, axis=-1)
+            if obs.shape[2] > 1:
+                obs = np.argmax(obs, axis=-1)
+            elif obs.shape[2] == 1:
+                obs = obs.reshape(obs.shape[0], obs.shape[1])
             self._rep.set_observation(obs)
