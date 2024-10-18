@@ -163,36 +163,81 @@ Feel free to override any other function if you need a behavior different from t
 After implementing your own class, you need to add the name and the class in `gym_pcgrl.envs.reps.REPRESENTATIONS` dictionary that can be found in [\_\_init\_\_.py](https://github.com/amidos2006/gym-pcgrl/blob/master/gym_pcgrl/envs/reps/__init__.py) the key name is used as the representation name for the environment and the value is to refer to the main class that it need to construct for that representation.
 
 ## Running train.py
-[train.py](https://github.com/amidos2006/gym-pcgrl/blob/master/train.py) uses stable baseline PPO2 algorithm for training. You can configure [train.py](https://github.com/amidos2006/gym-pcgrl/blob/master/train.py) to train for different problems or different representation by changing the game and representation parameters in the file to a different problem and/or representation.
+### Step 1: Install Anaconda
 
-To read more about the experiments and the different wrappers, check our paper [PCGRL: Procedural Content Generation via Reinforcement Learning](https://arxiv.org/abs/2001.09212).
+If you don't have Anaconda installed, follow these instructions to install it:
 
-You can run the code either using the Dockerfile using the following command line after installing [Docker](https://www.docker.com/):
-```sh
-docker image build -t pcgrl:latest . && docker run --runtime=nvidia pcgrl:latest
-```
-Another way is to use [Conda](https://www.anaconda.com/) by creating a virtual environment then activating it and installing all the dependencies for [train.py](https://github.com/amidos2006/gym-pcgrl/blob/master/train.py):
-```sh
-conda create --name pcgrl
-conda activate pcgrl
-pip install tensorflow==1.15
-pip install stable-baselines==2.9.0
-cd gym-pcgrl
-pip install -e .
-cd ..
-python train.py
-```
-Lastly, you can just install directly without using any virtual environment:
-```sh
-pip install tensorflow==1.15
-pip install stable-baselines==2.9.0
-cd gym-pcgrl
-pip install -e .
-cd ..
-python train.py
-```
+#### On Linux and macOS:
 
-PS: The training process will create a folder named `runs/` where two folders will appear one for tensorboard logs and the other for the saved models. The training is always saving the best model so far and the last model.
+1. Download the Anaconda installer from the official [Anaconda website](https://www.anaconda.com/products/individual).
+   - For Linux:
+     ```bash
+     wget https://repo.anaconda.com/archive/Anaconda3-2024.10-Linux-x86_64.sh
+     ```
+   - For macOS, download the `.pkg` file from the website.
+
+2. Run the installer (for Linux):
+   ```bash
+   bash Anaconda3-2024.10-Linux-x86_64.sh
+   ```
+3. Follow the on-screen instructions to complete the installation. Restart your terminal or use:
+   ```bash
+    source ~/.bashrc
+   ```
+4. Verify the installation:
+   ```bash
+   conda --version
+   ```
+For Windows, you can download the installer from the official [Anaconda website](https://www.anaconda.com/products/individual) and follow the on-screen instructions.
+
+### Step 2: Create a Python Environment for Reinforcement Learning
+
+After installing Anaconda, create a new Python environment specifically for reinforcement learning with Python 3.7:
+
+1. Open a terminal (or Anaconda Prompt on Windows).
+2. Run the following command to create a new environment named `RL`:
+
+   ```bash
+   conda create -n RL python=3.7
+   ```
+   This command creates a new Conda environment named RL with Python version 3.7.
+
+3. Activate the environment:
+
+   ```bash
+    conda activate RL
+    ```
+  Once activated, you'll see the environment name (RL) appear in your terminal prompt, indicating that you're now working inside the RL environment.
+
+### Step 3: Install Required Libraries and Dependencies
+
+Now that the environment is set up, install the necessary system dependencies and Python libraries for the reinforcement learning environment.
+
+#### System Dependencies (Linux)
+
+For Linux users, some system-level libraries are required to support graphical rendering and OpenGL. Install them using the following commands:
+
+```bash
+sudo apt-get install -y libsm6 libxext6 libxrender-dev
+sudo apt-get install -y python3-opengl
+```
+These libraries ensure that rendering works properly when using environments that rely on graphical outputs. 
+
+#### Python Libraries
+With the system dependencies installed, install the required Python libraries within the RL Conda environment:
+  
+  ```bash
+  pip install stable_baselines[extra]
+  pip install tensorflow-gpu==1.15
+  pip install setuptools==65.5.0 pip==21
+  pip install wheel==0.38.0
+  pip install -e .
+  pip install importlib-metadata==4.13.0
+  pip uninstall tensorboard
+  pip install tensorboard
+  pip install pyglet==1.5.29
+  ```
+Now with these installed, you can run the training script.
 
 ## Running Trained Model
 First make sure you have all required modules ([GYM PCGRL](https://github.com/amidos2006/gym-pcgrl), [Tensorflow](https://www.tensorflow.org/), and [Stable Baselines](https://stable-baselines.readthedocs.io/en/master/)) are installed either using [Docker](https://www.docker.com/), [Conda](https://www.anaconda.com/), or Pip directly. The code to run is similar to the above code for training just change [train.py](https://github.com/amidos2006/gym-pcgrl/blob/master/train.py) to [inference.py](https://github.com/amidos2006/gym-pcgrl/blob/master/inference.py).

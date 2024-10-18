@@ -13,6 +13,8 @@ from utils import make_vec_envs
 from model import FullyConvPolicyBigMap, FullyConvPolicySmallMap, CustomPolicyBigMap, CustomPolicySmallMap
 from IPython import display
 import matplotlib.pyplot as plt
+import argparse
+
 
 from stable_baselines.common.policies import FeedForwardPolicy
 
@@ -56,7 +58,7 @@ class Inference:
         elif game == "zelda":
             return info[self.length] > self._target_path and info["nearest-enemy"] >= self._target_enemy_dist
         elif game == "binary":
-            print(info[self.length] , self.binary_first_path,info["regions"],self._target_path)
+            # print(info[self.length] , self.binary_first_path,info["regions"],self._target_path)
             return info["regions"] == 1 and info[self.length] - self.binary_first_path >= self._target_path
 
     def reset_data(self):
@@ -84,7 +86,7 @@ class Inference:
         episode = 0
         data = []
         while episode < num_episode:
-            print(episode)
+            print(f'Episode: {episode}/{num_episode}')
             data_episodes = self.reset_data()
             kwargs = {
                 'change_percentage': random.random(),
@@ -111,7 +113,7 @@ class Inference:
             while not dones:
                 action, _ = agent.predict(obs)
                 new_obs, rewards, dones, info = env.step(action)
-                print(action)
+                # print(action)
                 _, _, action = np.unravel_index(action[0], (self.height, self.width, self.dim))
                 info = info[0]
                 if first_step: 
@@ -139,19 +141,56 @@ class Inference:
                 data_episodes['y'] = np.concatenate([np.array(data_episodes['y'])], axis=0)
                 data.append(data_episodes)
                 episode += 1
-        fname = f'./dataset/{game}-{representation}-v0.pkl'
-        if not os.path.exists('./dataset'):  
-            os.mkdir('./dataset')
+        # Save the dataset
+        fname = f'./dataset/{game}-{representation}-{num_episode}.pkl'
+        os.makedirs(f'./dataset/', exist_ok=True)
+
+        if os.path.exists(fname):
+            # Rename the old file by appending '_old' or any other marker
+            old_fname = f'./dataset/{game}-{representation}-{num_episode}_old.pkl'
+            os.rename(fname, old_fname)
+            # print(f"File already exists. Renamed the old file to: {old_fname}")
+
         with open(fname, 'wb') as f:
-            print('Before dump')
             pickle.dump(data, f)
 
 ################################## MAIN ########################################
 if __name__ == '__main__':
-    game = 'binary'
-    representation = 'wide'
+    # Set up argument parser with a description
+    parser = argparse.ArgumentParser(
+        description="Run inference on a specified game using a given representation and model."
+    )
+
+    # Define arguments with detailed help messages
+    parser.add_argument(
+        '-g', '--game',
+        type=str,
+        required=True,
+        help="The type of game to run inference on (e.g., 'binary', 'chess', etc.). This is required."
+    )
+
+    parser.add_argument(
+        '-r', '--representation',
+        type=str,
+        required=True,
+        help="The type of representation to use (e.g., 'wide', 'narrow'). This is required."
+    )
+
+    parser.add_argument(
+        '-n', '--num_episode',
+        type=int,
+        default=1,
+        help="The number of episodes to run for inference. Default is 1."
+    )
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    game = args.game
+    representation = args.representation
+    num_episode = args.num_episode
+
     model_path = './runs/{}_{}_1_log/best_model.pkl'.format(game, representation)
-    num_episode = 1
 
     inference = Inference(game, representation)
     inference.infer(game, representation, model_path, num_episode)
